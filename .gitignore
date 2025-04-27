@@ -22,3 +22,6 @@ env/
 
 # Docker related
 *.tar
+
+#large csv file
+data/apple_news_data.csv
