@@ -33,27 +33,7 @@ It combines live web scraping, sentiment analysis (VADER and FinBERT), XGBoost c
 
 ---
 
- Project Structure:
-
-stock_sentiment/
-│
-├── app/
-│   └── main.py                   # FastAPI app for serving the model via API
-│
-├── pipeline/
-│   ├── apple_news_scraper.py     # Scrape latest Apple news
-│   ├── apple_scraped_sentiment.py # Apply sentiment analysis + predict
-│   ├── apple_scraped_stocks.py    # Fetch Apple stock close price and store in DB
-│   └── prediction_checker.py      # Check if yesterday's predictions were correct
-│
-├── final_data/                    # Final labeled data output
-├── processed_data/                # News + Sentiment files
-├── scraped_data/                  # Raw scraped news
-├── app/apple_stock_sentiment_model.pkl # Trained XGBoost model
-├── requirements.txt               # All Python dependencies
-└── README.txt                     # This documentation file
-
----
+<pre> ## Project Structure ```text stock_sentiment/ ├── app/ │ ├── main.py # FastAPI app for model API │ └── apple_stock_sentiment_model.pkl # Trained XGBoost model ├── pipeline/ │ ├── apple_news_scraper.py # Scrape latest Apple news │ ├── apple_scraped_sentiment.py # Sentiment analysis & prediction │ ├── apple_scraped_stocks.py # Store daily close price │ └── prediction_checker.py # Compare yesterday’s predictions ├── final_data/ # Final labeled price+sentiment ├── processed_data/ # Sentiment-tagged news ├── scraped_data/ # Raw scraped headlines ├── requirements.txt # Python dependencies └── README.md # Project documentation ``` </pre>
 
  How to Run the Pipeline Locally:
 
