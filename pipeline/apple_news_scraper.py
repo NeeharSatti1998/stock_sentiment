@@ -16,13 +16,14 @@ def get_apple_news():
         return []
 
     news_list = []
+    today = datetime.now()
 
     for item in data.get("news", []):
         title = item.get("title")
         link = item.get("link")
         provider = item.get("publisher")
 
-        scraped_at = datetime.utcnow().isoformat()
+        scraped_at = today.isoformat()
 
         news_list.append({
             "symbol": "AAPL",
@@ -36,7 +37,7 @@ def get_apple_news():
 
 
 def save_news_to_csv(news_list):
-    today_str = datetime.utcnow().strftime("%Y-%m-%d")
+    today_str = datetime.now().strftime("%Y-%m-%d")
     folder = "scraped_data"
     os.makedirs(folder, exist_ok=True)  
     filename = os.path.join(folder, f"apple_news_scraped_{today_str}.csv")

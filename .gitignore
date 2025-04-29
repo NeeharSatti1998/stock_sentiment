@@ -25,3 +25,10 @@ env/
 
 #csv file
 *.csv
+
+bfg-*.jar
+
+.env
+aws_keys.json
+~/.aws/
+

@@ -2,75 +2,65 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime, timedelta
 import os
+import glob
+import pytz
+import mysql.connector
 
-today_str = datetime.now().strftime("%Y-%m-%d")
-input_file = f"processed_data/apple_news_with_sentiment_{today_str}.csv"
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'root1234',  
+    'database': 'apple_stock_sentiment'
+}
+conn = mysql.connector.connect(**db_config)
+cursor = conn.cursor()
 
+
+files = glob.glob("processed_data/apple_news_with_sentiment_*.csv")
+if not files:
+    raise FileNotFoundError("No sentiment files found. Scrape and run sentiment first!")
+
+input_file = max(files, key=os.path.getctime)
 print(f"Reading sentiment data from {input_file}...")
+
 df = pd.read_csv(input_file)
 
-df['scraped_at'] = pd.to_datetime(df['scraped_at'])
+
+eastern = pytz.timezone('US/Eastern')
+df['scraped_at'] = pd.to_datetime(df['scraped_at'], utc=True).dt.tz_convert(eastern)
 df['headline_date'] = df['scraped_at'].dt.date
 
 symbols = df['symbol'].unique()
 
-start_date = df['headline_date'].min() - timedelta(days=1)
-end_date = df['headline_date'].max() + timedelta(days=2)
+today_date = datetime.now(eastern).date()
+#today_date = datetime.now(eastern).date()-timedelta(days=1)
 
 price_data = {}
-
-# Download stock price data
 for symbol in symbols:
-    print(f"Fetching price data for {symbol}...")
-    data = yf.download(symbol, start=start_date, end=end_date)
+    print(f"Fetching {symbol} closing price for {today_date}...")
+    data = yf.download(symbol, start=today_date, end=today_date + timedelta(days=1))
     if data.empty:
-        print(f"No data for {symbol}. Skipping.")
-        continue
-    data = data[['Close']].reset_index()
-    data.columns = ['date', 'close']
-    price_data[symbol] = data
-
-# Merge news with stock price
-all_rows = []
-
-for symbol in symbols:
-    if symbol not in price_data:
+        print(f"No data for {symbol} on {today_date}. Market might be closed.")
         continue
 
-    print(f"Processing {symbol} data...")
-    df_stock = df[df['symbol'] == symbol].copy()
-    price_df = price_data[symbol].copy()
+    close_price = float(data['Close'].values[0])  
+    price_data[symbol] = close_price
 
-    df_stock['headline_date'] = pd.to_datetime(df_stock['headline_date']).dt.date
-    price_df['date'] = pd.to_datetime(price_df['date']).dt.date
+    insert_query = """
+        INSERT INTO stock_price_data (symbol, date, close_price)
+        VALUES (%s, %s, %s)
+    """
+    cursor.execute(insert_query, (symbol, today_date, close_price))
+    conn.commit()
+    print(f"Inserted {symbol} closing price: {close_price}")
 
-    # Merge today's close
-    merged = pd.merge(df_stock, price_df, left_on='headline_date', right_on='date', how='left')
-
-    # Merge next day's close (smart way)
-    price_df_next = price_df.copy()
-    price_df_next['date'] = price_df_next['date'] + timedelta(days=1) 
-    merged = pd.merge(merged, price_df_next[['date', 'close']], left_on='headline_date', right_on='date', how='left', suffixes=('', '_next'))
-
-
-    merged['label'] = (merged['close_next'] > merged['close']).astype(int)
-
-    print(f"\n--- DEBUG: {symbol} ---")
-    print("Sample headline_date:", merged['headline_date'].unique()[:5])
-    print("Sample close dates:", price_df['date'].unique()[:5])
-
-    all_rows.append(merged)
-
-
-final_df = pd.concat(all_rows)
-final_df = final_df.dropna(subset=['close', 'close_next'])
-
-
-output_folder = 'final_data'
+output_folder = "final_data"
 os.makedirs(output_folder, exist_ok=True)
+output_file = os.path.join(output_folder, f"apple_close_price_only_{today_date}.csv")
+pd.DataFrame([{"symbol": k, "close_price": v} for k, v in price_data.items()]).to_csv(output_file, index=False)
 
-output_file = os.path.join(output_folder, f"apple_final_data_{today_str}.csv")
-final_df.to_csv(output_file, index=False)
+print(f"\n Saved today's stock close prices to {output_file}")
 
-print(f"Saved labeled data to {output_file}")
-print(final_df[['symbol', 'title', 'vader_sentiment', 'finbert_sentiment', 'close', 'close_next', 'label']].head())
+# Close DB 
+cursor.close()
+conn.close()
