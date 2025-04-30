@@ -3,12 +3,15 @@ import pandas as pd
 from datetime import datetime
 import mysql.connector
 import pytz
+import os
+
+password = os.getenv("RDS_DB_PASSWORD")
 
 # RDS Connection
 conn = mysql.connector.connect(
     host="apple-stock-sentiment-db.cobaiu8aw8xi.us-east-1.rds.amazonaws.com",
     user="admin",
-    password="your_rds_password",
+    password="password",
     database="apple_stock_sentiment",
     ssl_disabled=True
 )
