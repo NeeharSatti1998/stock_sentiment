@@ -52,7 +52,6 @@ It combines live web scraping, sentiment analysis (VADER and FinBERT), XGBoost c
 
 <p>
 ---
-markdown
 
  How to Run the Pipeline Locally:
 
