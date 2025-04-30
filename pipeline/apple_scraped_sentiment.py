@@ -115,7 +115,7 @@ def sentiment_tagging_and_prediction(df):
     df['sentiment_agreement'] = (df['vader_sentiment'] == df['finbert_sentiment']).astype(int)
     df['news_length'] = df['title'].apply(len)
 
-    features = df[['vader_score', 'finbert_sentiment', 'day_of_week', 'sentiment_agreement', 'news_length']]
+    features = df[['vader_score', 'finbert_sentiment', 'day_of_week', 'sentiment_agreement', 'news_length']].astype(float)
     df['prediction'] = model.predict(features)
 
     insert_into_db(df)
