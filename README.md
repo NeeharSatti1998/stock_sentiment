@@ -50,9 +50,9 @@ stock_sentiment/
 ├── requirements.txt                  # Python dependencies
 └── README.md                         # Project documentation
 
-
+```text
 ---
-'''text
+
 
  How to Run the Pipeline Locally:
 
