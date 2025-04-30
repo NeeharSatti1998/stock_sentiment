@@ -34,23 +34,23 @@ It combines live web scraping, sentiment analysis (VADER and FinBERT), XGBoost c
 ---
 ## Project Structure
 
-```text
-stock_sentiment/
-├── app/
-│   ├── main.py                        # FastAPI app for model API
-│   └── apple_stock_sentiment_model.pkl  # Trained XGBoost model
-├── pipeline/
-│   ├── apple_news_scraper.py         # Scrape latest Apple news
-│   ├── apple_scraped_sentiment.py    # Sentiment analysis & prediction
-│   ├── apple_scraped_stocks.py       # Store daily close price
-│   └── prediction_checker.py         # Compare yesterday’s predictions
-├── final_data/                       # Final labeled price+sentiment
-├── processed_data/                   # Sentiment-tagged news
-├── scraped_data/                     # Raw scraped headlines
-├── requirements.txt                  # Python dependencies
-└── README.md                         # Project documentation
 
+<p>stock_sentiment/<br>
+├── app/<br>
+│   ├── main.py                        # FastAPI app for model API<br>
+│   └── apple_stock_sentiment_model.pkl  # Trained XGBoost model<br>
+├── pipeline/<br>
+│   ├── apple_news_scraper.py         # Scrape latest Apple news<br>
+│   ├── apple_scraped_sentiment.py    # Sentiment analysis & prediction<br>
+│   ├── apple_scraped_stocks.py       # Store daily close price<br>
+│   └── prediction_checker.py         # Compare yesterday’s predictions<br>
+├── final_data/                       # Final labeled price+sentiment<br>
+├── processed_data/                   # Sentiment-tagged news<br>
+├── scraped_data/                     # Raw scraped headlines<br>
+├── requirements.txt                  # Python dependencies<br>
+└── README.md                         # Project documentation<br>
 
+<p>
 ---
 markdown
 
