@@ -20,15 +20,9 @@ LOCAL_MODEL_PATH = "app/apple_stock_sentiment_model.pkl"
 def download_model_from_s3():
     try:
         s3 = boto3.client('s3')
-
-        if os.path.exists(LOCAL_MODEL_PATH):
-            print("Local model already exists. Skipping download...")
-        else:
-            print("Downloading model from S3...")
-            os.makedirs(os.path.dirname(LOCAL_MODEL_PATH), exist_ok=True)
-            s3.download_file(S3_BUCKET_NAME, S3_MODEL_KEY, LOCAL_MODEL_PATH)
-            print("Model downloaded successfully!")
-
+        print("Downloading model from S3...")
+        s3.download_file(S3_BUCKET_NAME, S3_MODEL_KEY, LOCAL_MODEL_PATH)
+        print("Model downloaded from S3.")
     except botocore.exceptions.ClientError as e:
         print(f"Error downloading model: {e}")
 
@@ -68,10 +62,10 @@ def get_vader_score(text):
 # Insert into database
 def insert_into_db(df):
     conn = mysql.connector.connect(
-    host="localhost",
-    user="root",           
-    password="root1234",  
-    database="apple_stock_sentiment"   
+    host="apple-stock-sentiment-db.cobaiu8aw8xi.us-east-1.rds.amazonaws.com",
+    user="admin",
+    password="SanthiKesava99",  
+    database="apple_stock_sentiment"
 )
     cursor = conn.cursor()
 
@@ -110,14 +104,11 @@ def insert_into_db(df):
     print("Data inserted into prediction_data table.")
 
 # Full pipeline
-def sentiment_tagging_and_prediction(input_csv):
-    df = pd.read_csv(input_csv)
-
+def sentiment_tagging_and_prediction(df):
     df['title'] = df['title'].apply(clean_text)
     df['vader_sentiment'] = df['title'].apply(get_vader_sentiment)
     df['finbert_sentiment'] = df['title'].apply(get_finbert_sentiment)
 
-    # Prepare features for prediction
     df['vader_score'] = df['title'].apply(get_vader_score)
     df['finbert_sentiment'] = df['finbert_sentiment'].map({"positive": 1, "neutral": 0, "negative": -1})
     df['day_of_week'] = pd.to_datetime(df['scraped_at']).dt.weekday
@@ -127,23 +118,18 @@ def sentiment_tagging_and_prediction(input_csv):
     features = df[['vader_score', 'finbert_sentiment', 'day_of_week', 'sentiment_agreement', 'news_length']]
     df['prediction'] = model.predict(features)
 
-    # Insert into DB
     insert_into_db(df)
-
-
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    output_folder = "processed_data"
-    os.makedirs(output_folder, exist_ok=True)
-    output_filename = os.path.join(output_folder, f"apple_news_with_sentiment_{today_str}.csv")
-    df.to_csv(output_filename, index=False)
-
-    print(f"Saved sentiment-tagged and predicted data to {output_filename}")
     print(df[['title', 'vader_sentiment', 'finbert_sentiment', 'prediction']].head())
 
-# Entry point
 if __name__ == "__main__":
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    input_file = f"scraped_data/apple_news_scraped_{today_str}.csv"
+    conn = mysql.connector.connect(
+        host="apple-stock-sentiment-db.cobaiu8aw8xi.us-east-1.rds.amazonaws.com",
+        user="admin",
+        password="SanthiKesava99",
+        database="apple_stock_sentiment"
+    )
+    df = pd.read_sql("SELECT * FROM apple_news_raw", conn)
+    conn.close()
 
-    print(f"Processing sentiment for {input_file}...")
-    sentiment_tagging_and_prediction(input_file)
+    print("Processing sentiment on fresh scraped data...")
+    sentiment_tagging_and_prediction(df)

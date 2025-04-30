@@ -1,7 +1,29 @@
 import requests
 import pandas as pd
 from datetime import datetime
-import os
+import mysql.connector
+import pytz
+
+# RDS Connection
+conn = mysql.connector.connect(
+    host="apple-stock-sentiment-db.cobaiu8aw8xi.us-east-1.rds.amazonaws.com",
+    user="admin",
+    password="your_rds_password",
+    database="apple_stock_sentiment"
+)
+cursor = conn.cursor()
+
+# Create table if it doesn't exist
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS scraped_news (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    symbol VARCHAR(10),
+    title TEXT,
+    link TEXT,
+    provider TEXT,
+    scraped_at DATETIME
+)
+""")
 
 def get_apple_news():
     url = "https://query1.finance.yahoo.com/v1/finance/search?q=AAPL"
@@ -16,41 +38,46 @@ def get_apple_news():
         return []
 
     news_list = []
-    today = datetime.now()
+    eastern = pytz.timezone("US/Eastern")
+    #scraped_at = datetime.now(tz=pytz.utc).astimezone(eastern)
+    #Testing
+    scraped_at = eastern.localize(datetime(2025, 4, 28, 20, 22, 11))
+
 
     for item in data.get("news", []):
-        title = item.get("title")
-        link = item.get("link")
-        provider = item.get("publisher")
-
-        scraped_at = today.isoformat()
-
         news_list.append({
             "symbol": "AAPL",
-            "title": title,
-            "link": link,
-            "provider": provider,
+            "title": item.get("title"),
+            "link": item.get("link"),
+            "provider": item.get("publisher"),
             "scraped_at": scraped_at
         })
 
     return news_list
 
-
-def save_news_to_csv(news_list):
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    folder = "scraped_data"
-    os.makedirs(folder, exist_ok=True)  
-    filename = os.path.join(folder, f"apple_news_scraped_{today_str}.csv")
-
-    df = pd.DataFrame(news_list)
-    df.to_csv(filename, index=False)
-    print(f"Saved scraped news to {filename}")
-    print(df[['symbol', 'title', 'scraped_at']].head())
+def insert_to_db(news_list):
+    for news in news_list:
+        cursor.execute("""
+            INSERT INTO scraped_news (symbol, title, link, provider, scraped_at)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            news['symbol'],
+            news['title'],
+            news['link'],
+            news['provider'],
+            news['scraped_at']
+        ))
+    conn.commit()
+    print("Scraped news inserted into database.")
 
 if __name__ == "__main__":
     print("Scraping Apple news...")
-    apple_news = get_apple_news()
-    if apple_news:
-        save_news_to_csv(apple_news)
+    news_data = get_apple_news()
+    if news_data:
+        insert_to_db(news_data)
     else:
         print("No news found or scraping failed.")
+
+# Close connections
+cursor.close()
+conn.close()

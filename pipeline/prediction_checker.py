@@ -9,9 +9,9 @@ yesterday = today - timedelta(days=1)
 
 # Connect to MySQL
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'root1234',
+    'host': 'apple-stock-sentiment-db.cobaiu8aw8xi.us-east-1.rds.amazonaws.com',
+    'user': 'admin',
+    'password': 'SanthiKesava99',
     'database': 'apple_stock_sentiment'
 }
 conn = mysql.connector.connect(**db_config)
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS prediction_accuracy_log (
 """)
 
 
+# Fetch predictions made on yesterday's news
 cursor.execute("""
     SELECT prediction FROM prediction_data
     WHERE DATE(scraped_at) = %s
@@ -42,6 +43,7 @@ if not predictions:
     conn.close()
     exit()
 
+# Fetch closing prices for yesterday and today
 cursor.execute("""
     SELECT close_price FROM stock_price_data
     WHERE symbol = 'AAPL' AND date = %s
@@ -55,21 +57,22 @@ cursor.execute("""
 today_row = cursor.fetchone()
 
 if not prev_row or not today_row:
-    print("⚠️ Missing stock price data for one of the days.")
+    print("Missing stock price data for one of the days.")
     cursor.close()
     conn.close()
     exit()
 
-# Determine actual movement
+# Determine actual market movement
 prev_close = prev_row[0]
 today_close = today_row[0]
 actual_label = int(today_close > prev_close)
 
+# Compare predictions to actual movement
 correct = sum(1 for pred in predictions if pred == actual_label)
 total = len(predictions)
 accuracy = correct / total
 
-# Insert accuracy log
+# Store results in DB
 cursor.execute("""
     INSERT INTO prediction_accuracy_log 
     (prediction_date, accuracy, total_predictions, correct_predictions)
@@ -77,7 +80,7 @@ cursor.execute("""
 """, (yesterday, accuracy, total, correct))
 conn.commit()
 
-print(f"✅ Accuracy for {yesterday}: {accuracy*100:.2f}% ({correct}/{total} correct)")
+print(f"Accuracy for {yesterday}: {accuracy*100:.2f}% ({correct}/{total} correct)")
 
 cursor.close()
 conn.close()
