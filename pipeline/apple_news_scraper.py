@@ -9,7 +9,8 @@ conn = mysql.connector.connect(
     host="apple-stock-sentiment-db.cobaiu8aw8xi.us-east-1.rds.amazonaws.com",
     user="admin",
     password="your_rds_password",
-    database="apple_stock_sentiment"
+    database="apple_stock_sentiment",
+    ssl_disabled=True
 )
 cursor = conn.cursor()
 
