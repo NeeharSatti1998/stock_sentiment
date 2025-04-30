@@ -52,7 +52,7 @@ stock_sentiment/
 
 
 ---
-```markdown
+markdown
 
  How to Run the Pipeline Locally:
 
