@@ -18,10 +18,8 @@ cursor = conn.cursor()
 
 # Get today's date in Eastern Time
 eastern = pytz.timezone('US/Eastern')
-#today_date = datetime.now(eastern).date()
-#testing
+today_date = datetime.now(eastern).date()
 
-today_date = datetime(2025, 4, 29).date()
 
 
 # Define symbol(s) to track
