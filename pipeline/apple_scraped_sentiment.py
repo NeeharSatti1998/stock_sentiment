@@ -83,6 +83,8 @@ def insert_into_db(df):
     )
     """)
 
+    df['scraped_at'] = pd.to_datetime(df['scraped_at']).dt.to_pydatetime()
+
     for _, row in df.iterrows():
         cursor.execute("""
         INSERT INTO prediction_data 
