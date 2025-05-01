@@ -113,7 +113,7 @@ except Exception as e:
     st.error(f"Error fetching stock data: {e}")
 
 
-st.header("📈 Today's Market Sentiment Based on News")
+st.header("Today's Market Sentiment Based on News")
 
 try:
     today_file = f"processed_data/apple_news_with_sentiment_{today}.csv"
@@ -155,13 +155,79 @@ try:
     # Majority Vote
     if predictions:
         final_vote = 1 if predictions.count(1) > predictions.count(0) else 0
-        st.subheader("📢 Final Predicted Movement for Apple Stock (Tomorrow):")
+        st.subheader("Final Predicted Movement for Apple Stock (Tomorrow):")
         if final_vote == 1:
-            st.success("Prediction: 📈 **Price will likely go UP**")
+            st.success("Prediction: **Price will likely go UP**")
         else:
-            st.error("Prediction: 📉 **Price will likely go DOWN**")
+            st.error("Prediction: **Price will likely go DOWN**")
     else:
         st.warning("No predictions available today. (Maybe news not scraped yet?)")
 
 except Exception as e:
     st.warning(f"Error processing today's news sentiment: {e}")
+
+st.header(" Daily Prediction Accuracy")
+
+try:
+    db_config = {
+        'host': 'apple-stock-sentiment-db.cobaiu8aw8xi.us-east-1.rds.amazonaws.com',
+        'user': 'admin',
+        'password': 'SanthiKesava99',
+        'database': 'apple_stock_sentiment'
+    }
+
+    import mysql.connector
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT prediction_date, accuracy, total_predictions, correct_predictions
+        FROM prediction_accuracy_log
+        ORDER BY prediction_date DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+
+    if row:
+        pred_date, accuracy, total, correct = row
+
+        # Fetch actual label and model label from predictions
+        cursor.execute("""
+            SELECT close_price FROM stock_price_data
+            WHERE symbol = 'AAPL' AND date = %s
+        """, (pred_date,))
+        prev_price = cursor.fetchone()[0]
+
+        cursor.execute("""
+            SELECT close_price FROM stock_price_data
+            WHERE symbol = 'AAPL' AND date = %s
+        """, (pred_date + timedelta(days=1),))
+        next_price = cursor.fetchone()[0]
+
+        actual_movement = "UP" if next_price > prev_price else "DOWN"
+
+        cursor.execute("""
+            SELECT prediction FROM prediction_data
+            WHERE DATE(scraped_at) = %s
+        """, (pred_date,))
+        model_preds = [r[0] for r in cursor.fetchall()]
+        model_final = "UP" if model_preds.count(1) > model_preds.count(0) else "DOWN"
+
+        is_correct = " Model Prediction was CORRECT!" if model_final == actual_movement else " Model Prediction was WRONG"
+
+        st.markdown(f"""
+        **Prediction Date:** {pred_date}  
+        **Actual Market Movement:** {actual_movement}  
+        **Model Prediction:** {model_final}  
+        **Accuracy:** {accuracy*100:.2f}% ({correct}/{total})  
+        **Result:** {is_correct}
+        """)
+
+    else:
+        st.warning("No prediction accuracy data found.")
+
+    cursor.close()
+    conn.close()
+
+except Exception as e:
+    st.error(f"Error loading prediction accuracy data: {e}")
