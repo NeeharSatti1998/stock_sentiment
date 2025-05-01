@@ -6,7 +6,7 @@ import pytz
 eastern = pytz.timezone("US/Eastern")
 #today = datetime.now(eastern).date()
 #testing
-today_date = datetime(2025, 4, 29).date()
+today = datetime(2025, 4, 29).date()
 yesterday = today - timedelta(days=1)
 
 # Connect to MySQL
