@@ -64,17 +64,22 @@ if not prev_row or not today_row:
     conn.close()
     exit()
 
-# Determine actual market movement
+# Actual movement
 prev_close = prev_row[0]
 today_close = today_row[0]
-actual_label = int(today_close > prev_close)
+actual_movement = 1 if today_close > prev_close else 0
 
-# Compare predictions to actual movement
-correct = sum(1 for pred in predictions if pred == actual_label)
+# Model majority prediction
+num_ones = predictions.count(1)
+num_zeros = predictions.count(0)
+model_majority = 1 if num_ones > num_zeros else 0
+
+# Accuracy count (classic way)
+correct = sum(1 for pred in predictions if pred == actual_movement)
 total = len(predictions)
 accuracy = correct / total
 
-# Store results in DB
+# Insert into accuracy log
 cursor.execute("""
     INSERT INTO prediction_accuracy_log 
     (prediction_date, accuracy, total_predictions, correct_predictions)
@@ -82,7 +87,16 @@ cursor.execute("""
 """, (yesterday, accuracy, total, correct))
 conn.commit()
 
-print(f"Accuracy for {yesterday}: {accuracy*100:.2f}% ({correct}/{total} correct)")
+# Print summary
+print(f"\nYesterday's closing price: {prev_close}")
+print(f"Today's closing price: {today_close}")
+print(f"Actual stock movement: {'UP' if actual_movement == 1 else 'DOWN'}")
+print(f"Model majority prediction: {'UP' if model_majority == 1 else 'DOWN'}")
+
+if model_majority == actual_movement:
+    print("The model was RIGHT.")
+else:
+    print("The model was WRONG.")
 
 cursor.close()
 conn.close()
