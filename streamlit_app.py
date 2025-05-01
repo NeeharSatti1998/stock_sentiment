@@ -133,17 +133,19 @@ try:
     conn.close()
 
     predictions = [row['prediction'] for row in results]
+    count_up = predictions.count(1)
+    count_down = predictions.count(0)
 
     if predictions:
-        final_vote = 1 if predictions.count(1) > predictions.count(0) else 0
-        st.subheader("Final Predicted Movement for Apple Stock (Tomorrow):")
-        if final_vote == 1:
+        if count_up > count_down:
             st.success("Prediction: **Price will likely go UP**")
-        else:
+        elif count_down > count_up:
             st.error("Prediction: **Price will likely go DOWN**")
+        else:
+            st.info("Prediction: **No clear direction today.**")
     else:
         st.warning("No predictions available today. (Maybe pipeline hasn't run yet?)")
-
+        
 except Exception as e:
     st.warning(f"Error processing today's prediction from DB: {e}")
 
