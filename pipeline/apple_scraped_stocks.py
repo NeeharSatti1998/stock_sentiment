@@ -21,7 +21,7 @@ eastern = pytz.timezone('US/Eastern')
 #today_date = datetime.now(eastern).date()
 #testing
 
-today_date = datetime(2025, 4, 29).date()
+today_date = datetime(2025, 4, 28).date()
 
 
 # Define symbol(s) to track
