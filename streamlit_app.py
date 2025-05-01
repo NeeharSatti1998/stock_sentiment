@@ -7,7 +7,7 @@ from transformers import pipeline
 import re
 import plotly.express as px
 import pandas as pd
-import msql.connector
+import mysql.connector
 
 # FastAPI endpoint
 API_URL = "http://localhost:8000/predict"
