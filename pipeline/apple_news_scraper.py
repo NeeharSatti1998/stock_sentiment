@@ -18,7 +18,7 @@ cursor = conn.cursor()
 
 # Create table if it doesn't exist
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS scraped_news (
+CREATE TABLE IF NOT EXISTS apple_news_raw (
     id INT AUTO_INCREMENT PRIMARY KEY,
     symbol VARCHAR(10),
     title TEXT,
@@ -61,7 +61,7 @@ def get_apple_news():
 def insert_to_db(news_list):
     for news in news_list:
         cursor.execute("""
-            INSERT INTO scraped_news (symbol, title, link, provider, scraped_at)
+            INSERT INTO apple_news_raw (symbol, title, link, provider, scraped_at)
             VALUES (%s, %s, %s, %s, %s)
         """, (
             news['symbol'],
