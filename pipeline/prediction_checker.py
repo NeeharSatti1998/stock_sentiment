@@ -4,9 +4,8 @@ import pytz
 
 # Setup timezone
 eastern = pytz.timezone("US/Eastern")
-#today = datetime.now(eastern).date()
-#testing
-today = datetime(2025, 4, 29).date()
+today = datetime.now(eastern).date()
+
 yesterday = today - timedelta(days=1)
 
 # Connect to MySQL
