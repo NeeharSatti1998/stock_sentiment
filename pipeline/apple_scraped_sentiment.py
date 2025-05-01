@@ -83,7 +83,7 @@ def insert_into_db(df):
     )
     """)
 
-  df['scraped_at'] = pd.to_datetime(df['scraped_at']).dt.strftime('%Y-%m-%d %H:%M:%S')
+    df['scraped_at'] = pd.to_datetime(df['scraped_at']).dt.strftime('%Y-%m-%d %H:%M:%S')
 
     for _, row in df.iterrows():
         cursor.execute("""
