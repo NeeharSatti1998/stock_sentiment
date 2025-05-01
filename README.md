@@ -29,7 +29,7 @@ It combines live web scraping, sentiment analysis (VADER and FinBERT), XGBoost c
 
 - Trained model saved as:  
   app/apple_stock_sentiment_model.pkl
-- Model also uploaded to AWS S3 for automatic loading on EC2 instances.
+- Trained model is stored in AWS S3 (`apple_stock_sentiment_model.pkl`) and automatically downloaded by the EC2 instance on each run.
 
 ---
 ## Project Structure
@@ -53,6 +53,8 @@ It combines live web scraping, sentiment analysis (VADER and FinBERT), XGBoost c
 <p>
 ---
 
+
+
  How to Run the Pipeline Locally:
 
 1. Install dependencies:
@@ -74,8 +76,8 @@ It combines live web scraping, sentiment analysis (VADER and FinBERT), XGBoost c
 
  Run the Streamlit Dashboard:
 
-- Visualize and manually test news impact on stock predictions:
-  
+- Visualizes daily sentiment predictions and accuracy directly from the MySQL database.
+
   streamlit run streamlit_app.py
 
 ---
