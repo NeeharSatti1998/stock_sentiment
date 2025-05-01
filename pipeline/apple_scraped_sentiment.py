@@ -21,6 +21,7 @@ def download_model_from_s3():
     try:
         s3 = boto3.client('s3')
         print("Downloading model from S3...")
+        os.makedirs(os.path.dirname(LOCAL_MODEL_PATH), exist_ok=True)
         s3.download_file(S3_BUCKET_NAME, S3_MODEL_KEY, LOCAL_MODEL_PATH)
         print("Model downloaded from S3.")
     except botocore.exceptions.ClientError as e:
