@@ -7,6 +7,7 @@ from transformers import pipeline
 import re
 import plotly.express as px
 import pandas as pd
+import msql.connector
 
 # FastAPI endpoint
 API_URL = "http://localhost:8000/predict"
@@ -113,46 +114,26 @@ except Exception as e:
     st.error(f"Error fetching stock data: {e}")
 
 
+db_config = {
+    'host': 'apple-stock-sentiment-db.cobaiu8aw8xi.us-east-1.rds.amazonaws.com',
+    'user': 'admin',
+    'password': 'SanthiKesava99',
+    'database': 'apple_stock_sentiment'
+}
+
 st.header("Today's Market Sentiment Based on News")
 
 try:
-    today_file = f"processed_data/apple_news_with_sentiment_{today}.csv"
-    df_sentiment = pd.read_csv(today_file)
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor(dictionary=True)
 
-    # Prepare features for model
-    features_list = []
-    for _, row in df_sentiment.iterrows():
-        vader_score = vader.polarity_scores(row['title'])['compound']
-        finbert_map = {"positive": 1, "neutral": 0, "negative": -1}
-        finbert_sentiment = finbert_map.get(row['finbert_sentiment'], 0)
-        day_of_week = pd.to_datetime(row['scraped_at']).weekday()
-        sentiment_agreement = int((row['vader_sentiment'] == row['finbert_sentiment']))
-        news_length = len(row['title'])
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    cursor.execute("SELECT prediction FROM prediction_data WHERE DATE(scraped_at) = %s", (today_str,))
+    results = cursor.fetchall()
+    conn.close()
 
-        features_list.append([
-            vader_score,
-            finbert_sentiment,
-            day_of_week,
-            sentiment_agreement,
-            news_length
-        ])
+    predictions = [row['prediction'] for row in results]
 
-    # Predict for all news
-    predictions = []
-    for features in features_list:
-        payload = {
-            "vader_score": features[0],
-            "finbert_sentiment": features[1],
-            "day_of_week": features[2],
-            "sentiment_agreement": features[3],
-            "news_length": features[4],
-        }
-        response = requests.post(API_URL, json=payload)
-        if response.status_code == 200:
-            pred = response.json()['prediction']
-            predictions.append(pred)
-
-    # Majority Vote
     if predictions:
         final_vote = 1 if predictions.count(1) > predictions.count(0) else 0
         st.subheader("Final Predicted Movement for Apple Stock (Tomorrow):")
@@ -161,10 +142,10 @@ try:
         else:
             st.error("Prediction: **Price will likely go DOWN**")
     else:
-        st.warning("No predictions available today. (Maybe news not scraped yet?)")
+        st.warning("No predictions available today. (Maybe pipeline hasn't run yet?)")
 
 except Exception as e:
-    st.warning(f"Error processing today's news sentiment: {e}")
+    st.warning(f"Error processing today's prediction from DB: {e}")
 
 st.header(" Daily Prediction Accuracy")
 
