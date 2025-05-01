@@ -42,9 +42,8 @@ def get_apple_news():
 
     news_list = []
     eastern = pytz.timezone("US/Eastern")
-    #scraped_at = datetime.now(tz=pytz.utc).astimezone(eastern)
-    #Testing
-    scraped_at = eastern.localize(datetime(2025, 4, 28, 20, 22, 11))
+    scraped_at = datetime.now(tz=pytz.utc).astimezone(eastern)
+
 
 
     for item in data.get("news", []):
