@@ -102,7 +102,7 @@ It combines live web scraping, sentiment analysis (VADER and FinBERT), XGBoost c
 ---
 
  Automation Plan (EC2):
-
+- Storing the data in AWS RDS database
 - Entire pipeline will be scheduled on AWS EC2 instance using cron jobs:
   - 7:00 PM EST → Scrape today's news + predict and save.
   - 4:30 PM next day → Scrape actual closing price, compare it with prediction.
